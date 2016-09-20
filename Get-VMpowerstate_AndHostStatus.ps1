@@ -18,8 +18,10 @@ $sites = @("vcenter01","vcenter02","vcenter03","vcenter04")
 #get array of sites and establishes connections to vcenters
 foreach ($site in $sites) {
   	$vCenter = $site + ".domainname.net"
+
+	#If you're not using a powershell credentials file to pass encrypted credentials to this script, uncomment -User <username> -Password <password>
 	
-  	Connect-VIServer $vCenter 
+  	Connect-VIServer $vCenter #-User <username> -Password <password>
 
 	$vmhosts=get-view -ViewType hostsystem -Property name,parent
 	$hostshash=@{}
@@ -50,11 +52,13 @@ foreach ($site in $sites) {
 	#send output to csv and disconnect from vcenter
 	$report | sort Host | export-csv -path "C:\path\to\output\$site $((Get-Date).ToString('MM-dd-yyyy_hhmm')).csv" -NoTypeInformation -UseCulture
 	
-	Disconnect-VIServer -Force -Confirm:$false -Server $c_vCenter
+	Disconnect-VIServer -Force -Confirm:$false -Server $vCenter
 	
 	<#
 	Write event log on completetion per site.  
-	note: if running for first time you will need to run powershell as administrator and run command 'Write-EventLog -LogName Application -Get-VMpowerstate_AndHostStatus -EventId ### -EntryType Information -Message "Get-VMpowerstate_AndHostStatus for vCenter $site completed successfully." ' Change ### to a number that suits your needs.
+	note: if running for first time you will need to run powershell as administrator and run commands:
+	'New-EventLog –LogName Application –Source Get-VMpowerstate_AndHostStatus'
+	'Write-EventLog -LogName Application -Source Get-VMpowerstate_AndHostStatus -EventId 007 -EntryType Information -Message "Get-VMpowerstate_AndHostStatus for vCenter $site completed successfully."'
 	#>
 	
 	Write-EventLog -LogName Application -Source name_of_script -EventId ### -EntryType Information -Message "Get-VMpowerstate_AndHostStatus for vCenter $site completed successfully."
